@@ -60,7 +60,21 @@ namespace PortfolioTracker.Core.Entities
         [ForeignKey(nameof(UserId))]
         public virtual User User { get; set; } = null!;
 
-        // todo: holdings
-        // todo: portfolio snapshot
+        /// <summary>
+        /// Collection of holdings (positions) in the portfolio
+        /// One portfolio can have multiple holdings
+        /// </summary>
+        public virtual ICollection<Holding> Holdings { get; set; } = new List<Holding>();
+
+        /// <summary>
+        /// Historical snapshots of the portfolio's value over time
+        /// Used for performance tracking and reporting
+        ///
+        /// Why store snapshots?
+        /// Best for: Fast queries, reliable historical reporting, and when we need to show charts or performance history quickly
+        /// Downside: A bit more storage space
+        /// vs. Computing on the fly: Less storage, but slower queries and complex calculations
+        /// </summary>
+        public virtual ICollection<PortfolioSnapshot> Snapshots { get; set; } = new List<PortfolioSnapshot>();
     }
 }
