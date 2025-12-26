@@ -10,7 +10,8 @@ namespace PortfolioTracker.Core.Entities
     public class User
     {
         /// <summary>
-        /// Using guid for better security and distribution
+        /// Using guid for better security and harder to guess
+        /// can generate client side if needed
         /// </summary>
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -18,7 +19,7 @@ namespace PortfolioTracker.Core.Entities
 
         [Required]
         [EmailAddress]
-        [MaxLength(60)]
+        [MaxLength(255)]
         public string Email { get; set; } = string.Empty;
 
         [Required]
@@ -28,11 +29,17 @@ namespace PortfolioTracker.Core.Entities
         [MaxLength(255)]
         public string? FullName { get; set; }
 
+        // Use UTC to make sure it's consistent across time zones
+        // No daylight savings issues
         [Required]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         [Required]
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+        /// <summary>
+        /// Last login is null until first login, set later, hence nullable
+        /// </summary>
         public DateTime? LastLogin { get; set; }
         
         //todo: add portfolio collection? virtual? Q's
