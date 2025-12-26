@@ -69,6 +69,64 @@ namespace PortfolioTracker.Infrastructure.Data
         /// </summary>
         public DbSet<PortfolioSnapshot> PortfolioSnapshots { get; set; }
 
+
+        /// <summary>
+        /// OnModelCreating is called when the model is being created.
+        /// This is where we configure entity relationships, indexes, constraints, etc.
+        /// This is the "Fluent API" approach (alternative to data annotations).
+        /// </summary>
+        /// <param name="modelBuilder">The builder used to construct the model</param>
         
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+
+            // Apply all configurations from separate configuration classes
+            // This keeps the DbContext clean and configurations organized
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+
+            // Configure table names (optional - EF uses entity names by default)
+            modelBuilder.Entity<User>().ToTable("users");
+            modelBuilder.Entity<Portfolio>().ToTable("portfolios");
+            modelBuilder.Entity<Holding>().ToTable("holdings");
+            modelBuilder.Entity<Security>().ToTable("securities");
+            modelBuilder.Entity<Transaction>().ToTable("transactions");
+            modelBuilder.Entity<PriceHistory>().ToTable("priceHistory");
+            modelBuilder.Entity<Dividend>().ToTable("dividends");
+            modelBuilder.Entity<PortfolioSnapshot>().ToTable("portfolio_snapshots");
+
+            // Configure indexes for better query performance
+            ConfigureIndexes(modelBuilder);
+
+            // Configure unique constraints
+            ConfigureUniqueConstraints(modelBuilder);
+
+            // Configure relationships between entities
+            ConfigureRelationships(modelBuilder);
+
+            // Configure default values and computed columns
+            ConfigureDefaults(modelBuilder);
+        }
+
+        private void ConfigureDefaults(ModelBuilder modelBuilder)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void ConfigureRelationships(ModelBuilder modelBuilder)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void ConfigureUniqueConstraints(ModelBuilder modelBuilder)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void ConfigureIndexes(ModelBuilder modelBuilder)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
