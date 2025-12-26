@@ -20,8 +20,4 @@
     <ProjectReference Include="..\PortfolioTracker.Infrastructure\PortfolioTracker.Infrastructure.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Controllers\" />
-  </ItemGroup>
-
 </Project>
