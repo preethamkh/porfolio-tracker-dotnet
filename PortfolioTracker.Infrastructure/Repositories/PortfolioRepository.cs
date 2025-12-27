@@ -23,7 +23,7 @@ namespace PortfolioTracker.Infrastructure.Repositories
             return await DbSet
                 .AsNoTracking()
                 .Where(p => p.UserId == userId)
-                .OrderBy(p => p.IsDefault) // todo: descending?
+                .OrderByDescending(p => p.IsDefault)    
                 .ThenBy(p => p.Name)
                 .ToListAsync();
         }
