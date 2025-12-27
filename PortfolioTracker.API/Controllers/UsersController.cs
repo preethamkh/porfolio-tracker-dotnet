@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using PortfolioTracker.Core.Entities;
-using PortfolioTracker.Infrastructure.Data;
+using PortfolioTracker.Core.DTOs.User;
+using PortfolioTracker.Core.Interfaces.Services;
 
 namespace PortfolioTracker.API.Controllers
 {
@@ -28,19 +27,17 @@ namespace PortfolioTracker.API.Controllers
     [Route("api/[controller]")]
     public class UsersController : ControllerBase
     {
-        // todo: inject IUserService instead of using DbContext directly
-        // todo: keep controller thin
-        private readonly ApplicationDbContext _context;
+        private readonly IUserService _userService;
         private readonly ILogger<UsersController> _logger;
 
         /// <summary>
         /// Constructor with Dependency Injection
         /// </summary>
-        /// <param name="context">Database context</param>
+        /// <param name="userService">User Service instance</param>
         /// <param name="logger">Logger for this controller</param>
-        public UsersController(ApplicationDbContext context, ILogger<UsersController> logger)
+        public UsersController(IUserService userService, ILogger<UsersController> logger)
         {
-            _context = context;
+            _userService = userService;
             _logger = logger;
         }
 
@@ -49,16 +46,11 @@ namespace PortfolioTracker.API.Controllers
         /// </summary>
         /// <returns>List of all users</returns>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+        public async Task<ActionResult<IEnumerable<UserDto>>> GetUsers()
         {
-            _logger.LogInformation("Fetching all users from the database");
+            _logger.LogInformation("GET /api/users - Retrieving all users");
 
-            var users = await _context.Users
-                // read-only query for better performance
-                .AsNoTracking()
-                .ToListAsync();
-
-            _logger.LogInformation("Retrieved {Count} users", users.Count);
+            var users = await _userService.GetAllUsersAsync();
 
             return Ok(users);
         }
@@ -72,24 +64,114 @@ namespace PortfolioTracker.API.Controllers
         [HttpGet("{id:guid}")]
         [ProducesResponseType((StatusCodes.Status200OK))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<User>> GetUser(Guid id)
-        {            _logger.LogInformation("Getting user with ID: {UserId}", id);
+        public async Task<ActionResult<UserDto>> GetUser(Guid id)
+        {
+            _logger.LogInformation("GET /api/users/{UserId}", id);
 
-            var user = await _context.Users
-                .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.Id == id);
+            var user = await _userService.GetUserByIdAsync(id);
 
             if (user == null)
             {
-                _logger.LogWarning("User with ID {UserId} not found", id);
                 return NotFound(new { message = $"User with ID {id} not found" });
             }
 
-            _logger.LogInformation("Retrieved user: {Email}", user.Email);
             return Ok(user);
         }
 
-        //[HttpPost]
-        //public async Task<ActionResult<User>> CreateUser([FromBody] CreateUser)
+        /// <summary>
+        /// Create a new user.
+        /// </summary>
+        /// <param name="createUserDto">User registration details</param>
+        /// <returns>Created user</returns>
+        [HttpPost]
+        [ProducesResponseType(typeof(UserDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<UserDto>> CreateUser([FromBody] CreateUserDto createUserDto)
+        {
+            _logger.LogInformation("POST /api/users - Creating user: {Email}", createUserDto.Email);
+
+            // Model validation happens automatically via [Required], [EmailAddress] attributes
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var user = await _userService.CreateUserAsync(createUserDto);
+
+                // Return 201 Created with location header
+                return CreatedAtAction(
+                    nameof(GetUser),
+                    new { id = user.Id },
+                    user
+                );
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Business logic exception (e.g., email already exists)
+                _logger.LogWarning("Failed to create user: {Message}", ex.Message);
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Update user details.
+        /// </summary>
+        /// <param name="id">User ID</param>
+        /// <param name="updateUserDto">Updated user details</param>
+        /// <returns>Updated user</returns>
+        [HttpPut("{id:guid}")]
+        [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<UserDto>> UpdateUser(Guid id, [FromBody] UpdateUserDto updateUserDto)
+        {
+            _logger.LogInformation("PUT /api/users/{UserId}", id);
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var user = await _userService.UpdateUserAsync(id, updateUserDto);
+
+                if (user == null)
+                {
+                    return NotFound(new { message = $"User with ID {id} not found" });
+                }
+
+                return Ok(user);
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning("Failed to update user: {Message}", ex.Message);
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Delete a user.
+        /// </summary>
+        /// <param name="id">User ID</param>
+        /// <returns>No content</returns>
+        [HttpDelete("{id:guid}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteUser(Guid id)
+        {
+            _logger.LogInformation("DELETE /api/users/{UserId}", id);
+
+            var deleted = await _userService.DeleteUserAsync(id);
+
+            if (!deleted)
+            {
+                return NotFound(new { message = $"User with ID {id} not found" });
+            }
+
+            return NoContent();
+        }
     }
 }
