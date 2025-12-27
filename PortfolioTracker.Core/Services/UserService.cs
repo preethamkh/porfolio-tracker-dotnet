@@ -17,6 +17,8 @@ namespace PortfolioTracker.Core.Services
     /// </remarks>
     public class UserService : IUserService
     {
+        //private readonly ApplicationDbContext _context;
+        //private readonly ILogger<UserService> _logger;
         public Task<IEnumerable<UserDto>> GetAllUsersAsync()
         {
             throw new NotImplementedException();
