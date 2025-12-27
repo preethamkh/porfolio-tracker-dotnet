@@ -38,6 +38,21 @@ namespace PortfolioTracker.Core.Interfaces.Services
         Task<UserDto?> GetUserByEmailAsync(string email);
 
         /// <summary>
+        /// Create a new user.
+        /// </summary>
+        /// <param name="createUserDto">User creation data</param>
+        /// <returns>Created user details</returns>
+        Task<UserDto?> CreateUserAsync(CreateUserDto createUserDto);
+
+        /// <summary>
+        /// Update user details.
+        /// </summary>
+        /// <param name="id">User ID</param>
+        /// <param name="updateUserDto">Updated user data</param>
+        /// <returns>Updated user details or null if not found</returns>
+        Task<UserDto?> UpdateUserAsync(Guid id, UpdateUserDto updateUserDto);
+
+        /// <summary>
         /// Delete a user by their unique identifier.
         /// </summary>
         /// <param name="id">The unique identifier of the user.</param>
