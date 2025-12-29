@@ -285,6 +285,14 @@ public class UserServiceTests : TestBase
             .Setup(repo => repo.AddAsync(It.IsAny<User>()))
             .ReturnsAsync((User u) => u);
 
+        // or whatever properties (can't figure out the ID as it's generated), hence use It.IsAny<Guid>()
+        //_mockUserRepository.Verify(repo => repo.AddAsync(
+        //    It.Is<User>(u =>
+        //            u.Email == createUserDto.Email &&
+        //            u.FullName == createUserDto.FullName &&
+        //            !string.IsNullOrEmpty(u.PasswordHash)
+        //    )), Times.Once);
+
         // Mock three: SaveChangesAsync - simulate saving to database, should succeed
         _mockUserRepository.InSequence(sequence: mockCallSequence)
             .Setup(repo => repo.SaveChangesAsync())
@@ -426,5 +434,106 @@ public class UserServiceTests : TestBase
         result.Should().BeNull();
 
         _mockUserRepository.Verify(repo => repo.UpdateAsync(It.IsAny<User>()), Times.Never);
+    }
+
+    /// <summary>
+    /// Test: Update user with email that's taken by another user.
+    /// Tests business rule enforcement during updates.
+    /// </summary>
+    /// <remarks>
+    /// Scenario: User A tries to change email to email already owned by User B
+    /// Expected: Reject the update
+    /// 
+    /// Key Difference from Create:
+    /// - Create: Check if email exists AT ALL
+    /// - Update: Check if email exists for ANOTHER user (not this user)
+    /// </remarks>
+    [Fact]
+    public async Task UpdateUserAsync_WithDuplicateEmail_ShouldThrowException()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var existingUser = new User { Id = userId, Email = "user1@test.com" };
+        var updateDto = new UpdateUserDto { Email = "taken@test.com" };
+
+        // Mock: GetByIdAsync returns existing user
+        _mockUserRepository
+            .Setup(repo => repo.GetByIdAsync(userId))
+            .ReturnsAsync(existingUser);
+
+        // Mock: Email is taken by another user
+        _mockUserRepository
+            .Setup(repo => repo.IsEmailTakenAsync(updateDto.Email, userId))
+            .ReturnsAsync(true);
+
+        // Act
+        Func<Task> updateUserAction = async () => await _userService.UpdateUserAsync(userId, updateDto);
+
+        // Assert
+        await updateUserAction.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage($"Email {updateDto.Email} is already taken");
+
+        _mockUserRepository.Verify(repo => repo.UpdateAsync(It.IsAny<User>()), Times.Never);
+    }
+
+    /// <summary>
+    /// Delete existing user - happy path.
+    /// </summary>
+    /// <returns></returns>
+    [Fact]
+    public async Task DeleteUserAsync_WhenUserExists_ShouldDeleteAndReturnTrue()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var existingUser = new User { Id = userId, Email = "user1@test.com" };
+
+        // Mock: GetByIdAsync returns existing user
+        _mockUserRepository
+            .Setup(repo => repo.GetByIdAsync(userId))
+            .ReturnsAsync(existingUser);
+
+        // Mock: DeleteAsync
+        _mockUserRepository
+            .Setup(repo => repo.DeleteAsync(existingUser))
+            .Returns(Task.CompletedTask);
+
+        // Mock: SaveChangesAsync
+        _mockUserRepository
+            .Setup(repo => repo.SaveChangesAsync())
+            .ReturnsAsync(1);
+
+        // Act
+        var result = await _userService.DeleteUserAsync(userId);
+
+        // Assert
+        result.Should().BeTrue();
+
+        _mockUserRepository.Verify(repo => repo.DeleteAsync(existingUser), Times.Once);
+        _mockUserRepository.Verify(repo => repo.SaveChangesAsync(), Times.Once);
+    }
+
+    /// <summary>
+    /// Delete non-existent user.
+    /// </summary>
+    /// <returns></returns>
+    [Fact]
+    public async Task DeleteUserAsync_WhenUserNotFound_ShouldReturnFalse()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+
+        // Mock: User not found
+        _mockUserRepository
+            .Setup(repo => repo.GetByIdAsync(userId))
+            .ReturnsAsync((User?)null);
+
+        // Act
+        var result = await _userService.DeleteUserAsync(userId);
+
+        // Assert
+        result.Should().BeFalse();
+
+        _mockUserRepository.Verify(repo => repo.DeleteAsync(It.IsAny<User>()), Times.Never);
+        _mockUserRepository.Verify(repo => repo.SaveChangesAsync(), Times.Never);
     }
 }
