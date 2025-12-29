@@ -270,19 +270,23 @@ public class UserServiceTests : TestBase
             FullName = "User One"
         };
 
+        // to ensure the mock 1, 2, 3 are called in order the CreateUserAsync() method of the UserService
+        // if any of the methods get called in a different order, this will highlight / fail
+        var mockCallSequence = new MockSequence();
+
         // Mock one: Email is not taken
         // Business rule: check email availability before creating
-        _mockUserRepository
+        _mockUserRepository.InSequence(sequence: mockCallSequence)
             .Setup(repo => repo.IsEmailTakenAsync(createUserDto.Email, null))
             .ReturnsAsync(false);
 
         // Mock two: AddAsync - simulate adding user to database, should succeed
-        _mockUserRepository
+        _mockUserRepository.InSequence(sequence: mockCallSequence)
             .Setup(repo => repo.AddAsync(It.IsAny<User>()))
             .ReturnsAsync((User u) => u);
 
         // Mock three: SaveChangesAsync - simulate saving to database, should succeed
-        _mockUserRepository
+        _mockUserRepository.InSequence(sequence: mockCallSequence)
             .Setup(repo => repo.SaveChangesAsync())
             .ReturnsAsync(1); // 1 row affected - EF core convention
 
@@ -290,11 +294,16 @@ public class UserServiceTests : TestBase
         var result = await _userService.CreateUserAsync(createUserDto);
 
         // Assert
+        // verify DTO was created correctly
         result.Should().NotBeNull();
         result.Email.Should().Be(createUserDto.Email);
         result.FullName.Should().Be(createUserDto.FullName);
+        // found a bug (and fixed) - swagger would create the user ID correctly (ORM ensures this)
+        // but during test, since I am supplying the values, I need to ensure the CreateUserAsync()
+        // has the Id = Guid.NewGuid() set so that the guid is non-empty, since I am mocking the repository and controlling the flow.
         result.Id.Should().NotBe(Guid.Empty);
 
+        // verify all repository methods were called in the correct order
         _mockUserRepository.Verify(repo => repo.IsEmailTakenAsync(createUserDto.Email, null), Times.Once());
 
         _mockUserRepository.Verify(repo => repo.AddAsync(It.IsAny<User>()), Times.Once());
