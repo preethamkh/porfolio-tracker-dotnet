@@ -61,7 +61,7 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>
             {
                 // UseInMemoryDatabase creates a fake database in memory
                 // Database name must be unique per test to avoid conflicts
-                options.UseInMemoryDatabase($"TestDb_{Guid.NewGuid()}");
+                options.UseInMemoryDatabase($"IntegrationTestDb");
 
                 // Why in-memory?
                 // - Fast: No disk I/O
