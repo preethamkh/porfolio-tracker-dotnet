@@ -52,4 +52,36 @@ public class UsersControllerTests : IntegrationTestBase
         users.Should().Contain(u => u.Email == "user2@test.com");
         users.Should().Contain(u => u.Email == "user3@test.com");
     }
+
+    [Fact]
+    public async Task GetUser_WhenUserExists_ReturnsUser()
+    {
+        // Arrange
+        var user = await TestDataBuilder.CreateUser(Context, email: "preetham@test.com", fullName: "Preetham K H");
+
+        // Act
+        var response = await Client.GetAsync($"/api/users/{user.Id}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var returnedUser = await response.ReadAsJsonAsync<UserDto>();
+        returnedUser.Should().NotBeNull();
+        returnedUser.Id.Should().Be(user.Id);
+        returnedUser.Email.Should().Be("preetham@test.com");
+        returnedUser.FullName.Should().Be("Preetham K H");
+    }
+
+    [Fact]
+    public async Task GetUser_WhenUserDoesNotExist_ReturnsNotFound()
+    {
+        // Arrange
+        var nonExistentUserId = Guid.NewGuid();
+
+        // Act
+        var response = await Client.GetAsync($"/api/users/{nonExistentUserId}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
 }
