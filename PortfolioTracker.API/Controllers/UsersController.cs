@@ -62,7 +62,7 @@ namespace PortfolioTracker.API.Controllers
         /// <returns>User details</returns>
         // Adding constraint (guid) to the route parameter
         [HttpGet("{id:guid}")]
-        [ProducesResponseType((StatusCodes.Status200OK))]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<UserDto>> GetUser(Guid id)
         {
