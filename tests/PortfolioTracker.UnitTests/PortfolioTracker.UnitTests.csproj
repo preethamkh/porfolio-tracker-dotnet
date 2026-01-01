@@ -20,11 +20,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Using Include="Xunit" />
+    <ProjectReference Include="..\..\src\PortfolioTracker.Core\PortfolioTracker.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PortfolioTracker.Core\PortfolioTracker.Core.csproj" />
+    <Using Include="Xunit" />
   </ItemGroup>
 
 </Project>
