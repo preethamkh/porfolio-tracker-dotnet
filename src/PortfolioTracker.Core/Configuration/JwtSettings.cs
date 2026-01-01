@@ -7,7 +7,7 @@
 /// <remarks>
 /// Security Note:
 /// - Secret MUST be at least 32 characters for HS256 algorithm
-/// - Never commit real secrets to git (use environment variables in production - might take an exception for this portfolio showcase app)
+/// - Never commit real secrets to git (use environment variables in production)
 /// - Rotate secrets regularly in production
 /// </remarks>
 public class JwtSettings
