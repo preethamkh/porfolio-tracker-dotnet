@@ -4,7 +4,7 @@
 /// Response DTO returned after successful authentication.
 /// Contains JWT token and user information.
 /// </summary>
-public class AuthenticationResponse
+public class AuthResponse
 {
     /// <summary>
     /// JWT token for authentication.
