@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using PortfolioTracker.Core.DTOs.Auth;
-using PortfolioTracker.Core.DTOs.Authentication;
 using PortfolioTracker.Infrastructure.Data;
 using PortfolioTracker.IntegrationTests.Fixtures;
 using PortfolioTracker.IntegrationTests.Helpers;

@@ -1,6 +1,4 @@
-﻿using PortfolioTracker.Core.DTOs.Authentication;
-
-namespace PortfolioTracker.Core.DTOs.Auth;
+﻿namespace PortfolioTracker.Core.DTOs.Auth;
 
 /// <summary>
 /// Response DTO returned after successful authentication.

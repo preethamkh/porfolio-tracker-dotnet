@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace PortfolioTracker.Core.DTOs.Authentication;
+namespace PortfolioTracker.Core.DTOs.Auth;
 
 /// <summary>
 /// Request DTO for user login.

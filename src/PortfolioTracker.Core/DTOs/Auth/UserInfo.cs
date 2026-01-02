@@ -1,4 +1,4 @@
-﻿namespace PortfolioTracker.Core.DTOs.Authentication;
+﻿namespace PortfolioTracker.Core.DTOs.Auth;
 
 /// <summary>
 /// User information included in authentication response.
