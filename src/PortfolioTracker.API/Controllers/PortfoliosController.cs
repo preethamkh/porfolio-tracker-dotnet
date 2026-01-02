@@ -134,7 +134,7 @@ public class PortfoliosController(
 
             return CreatedAtAction(
                 nameof(GetPortfolio),
-                new { userId, id = portfolio.Id },
+                new { userId, portfolioId = portfolio.Id },
                 portfolio
             );
         }
