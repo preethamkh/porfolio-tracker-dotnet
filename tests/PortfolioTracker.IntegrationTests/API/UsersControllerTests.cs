@@ -7,12 +7,8 @@ using PortfolioTracker.IntegrationTests.Helpers;
 
 namespace PortfolioTracker.IntegrationTests.API;
 
-public class UsersControllerTests : IntegrationTestBase
+public class UsersControllerTests(IntegrationTestWebAppFactory factory) : IntegrationTestBase(factory)
 {
-    public UsersControllerTests(IntegrationTestWebAppFactory factory) : base(factory)
-    {
-    }
-
     #region GET /api/users - Get
 
     [Fact]
