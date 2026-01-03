@@ -1,4 +1,3 @@
-using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -7,6 +6,10 @@ using PortfolioTracker.Core.Interfaces.Repositories;
 using PortfolioTracker.Core.Interfaces.Services;
 using PortfolioTracker.Core.Services;
 using PortfolioTracker.Infrastructure.Repositories;
+using PortfolioTracker.Infrastructure.Services;
+using System.Text;
+using Polly;
+using PortfolioTracker.Infrastructure.Configuration;
 using ApplicationDbContext = PortfolioTracker.Infrastructure.Data.ApplicationDbContext;
 using DateTime = System.DateTime;
 using Exception = System.Exception;
@@ -178,6 +181,122 @@ builder.Services.AddCors(options =>
     });
 });
 
+// ======================================================
+// REDIS CACHING CONFIGURATION
+// ======================================================
+
+// Configure Redis settings from appsettings.json
+builder.Services.Configure<RedisSettings>(
+    builder.Configuration.GetSection("Redis"));
+
+// Configure cache duration settings
+builder.Services.Configure<StockDataCacheSettings>(
+    builder.Configuration.GetSection("StockDataCache"));
+
+// Add Redis distributed cache (IDistributedCache implementation)
+var redisSettings = builder.Configuration.GetSection("Redis").Get<RedisSettings>();
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = redisSettings?.ConnectionString ?? "localhost:6379";
+    options.InstanceName = redisSettings?.InstanceName ?? "PortfolioTracker:";
+});
+
+
+// ======================================================
+// STOCK DATA SERVICE WITH CACHING (DECORATOR PATTERN)
+// ======================================================
+
+// 1. Configure Alpha Vantage settings from appsettings.json
+builder.Services.Configure<AlphaVantageSettings>(builder.Configuration.GetSection("AlphaVantage"));
+
+// 2. Register HttpClient for AlphaVantageService
+// WHY AddHttpClient instead of new HttpClient()?
+// - Prevents socket exhaustion (reuses HttpClient instances)
+// - Adds resilience (can add Polly retry policies)
+// - Easier to mock in tests
+// - Configures default settings centrally
+builder.Services.AddHttpClient<IStockDataService, AlphaVantageService>(client =>
+{
+    // Set reasonable timeout for API calls
+    client.Timeout = TimeSpan.FromSeconds(30);
+
+    // Alpha Vantage recommends User-Agent header
+    client.DefaultRequestHeaders.Add("User-Agent", "PortfolioTracker/1.0");
+
+    // Optional: Add retry policy using Polly (install Microsoft.Extensions.Http.Polly)
+}).AddTransientHttpErrorPolicy(policy =>
+     policy.WaitAndRetryAsync(3, retryAttempt =>
+         TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))));
+
+// IMPORTANT: When we add Redis caching(later), we'll wrap this registration
+// The pattern will be:
+// AlphaVantageService (makes API calls) 
+//   -> wrapped by -> 
+// StockDataCachingService (adds caching)
+//   -> registered as -> 
+// IStockDataService (what controllers use)
+
+
+builder.Services.AddScoped<IStockDataService>(serviceProvider =>
+{
+    // Resolve the inner AlphaVantageService
+    var alphaVantageService = serviceProvider.GetRequiredService<AlphaVantageService>();
+    // Resolve other dependencies for caching
+    var cache = serviceProvider.GetRequiredService<Microsoft.Extensions.Caching.Distributed.IDistributedCache>();
+    var logger = serviceProvider.GetRequiredService<ILogger<StockDataCachingService>>();
+    var cacheSettings = serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<StockDataCacheSettings>>();
+    // Return the caching decorator wrapping the AlphaVantageService
+    return new StockDataCachingService(
+        alphaVantageService,
+        cache,
+        logger,
+        cacheSettings);
+});
+
+
+// EXPLANATION OF THE DI REGISTRATION
+
+// ======================================================
+// What happens when something requests IStockDataService?
+//
+// 1. DI container runs the factory lambda above
+// 2. Creates AlphaVantageService (with HttpClient, settings, logger)
+// 3. Gets IDistributedCache (Redis connection)
+// 4. Creates StockDataCachingService wrapping AlphaVantageService
+// 5. Returns StockDataCachingService as IStockDataService
+//
+// Flow when GetQuoteAsync("AAPL") is called:
+// Controller -> IStockDataService (StockDataCachingService)
+//   - checks Redis cache
+//   - if cache miss, calls AlphaVantageService
+//   - AlphaVantageService calls Alpha Vantage API
+//   - StockDataCachingService stores result in Redis
+//   - returns to Controller
+// ======================================================
+
+
+// FUTURE: SWITCHING PROVIDERS
+
+
+// When you want to switch from Alpha Vantage to Finnhub:
+// 
+// Option 1: Simple switch (replace registration)
+// builder.Services.AddHttpClient<IStockDataService, FinnhubService>(...);
+// 
+// Option 2: Configuration-based switching
+// var provider = builder.Configuration["StockDataProvider:ActiveProvider"];
+// if (provider == "AlphaVantage")
+//     builder.Services.AddHttpClient<IStockDataService, AlphaVantageService>(...);
+// else if (provider == "Finnhub")
+//     builder.Services.AddHttpClient<IStockDataService, FinnhubService>(...);
+// 
+// Option 3: Factory pattern (advanced - use both providers)
+// builder.Services.AddHttpClient<AlphaVantageService>(...);
+// builder.Services.AddHttpClient<FinnhubService>(...);
+// builder.Services.AddSingleton<IStockDataServiceFactory, StockDataServiceFactory>();
+// 
+// Business logic (SecurityService, etc.) never changes - only this registration!
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -188,7 +307,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(options =>
     {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Portfolio Tracker API V1"); 
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Portfolio Tracker API V1");
         //options.RoutePrefix = string.Empty; // Set Swagger UI at app's root
     });
 }
@@ -227,13 +346,11 @@ app.MapGet("/health", async (ApplicationDbContext dbContext) =>
         return Results.Problem(
             detail: ex.Message,
             statusCode: 503,
-            title:""
+            title: ""
             );
     }
 });
 
 app.Run();
 
-public partial class Program
-{
-}
+public partial class Program;
