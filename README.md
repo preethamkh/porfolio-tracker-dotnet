@@ -1,6 +1,6 @@
 \## License
 
-This project is \*\*proprietary\*\*. You are allowed to view the code but \*\*cannot redistribute\*\*, \*\*modify\*\*, or use it for \*\*commercial purposes\*\* without permission from the author.
+You are allowed to view the code but \*\*cannot redistribute\*\*, \*\*modify\*\*, or use it for \*\*commercial purposes\*\* without permission from the author.
 
 # Portfolio Management Application for Tracking Stocks, ETFs, and Investment Performance
 
