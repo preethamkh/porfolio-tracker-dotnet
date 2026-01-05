@@ -14,7 +14,7 @@ public interface IHoldingService
     /// <param name="portfolioId"></param>
     /// <param name="userId"></param>
     /// <returns></returns>
-    Task<IEnumerable<HoldingDto>> GetHoldingsByPortfolioIdAsync(Guid portfolioId, Guid userId);
+    Task<IEnumerable<HoldingDto>> GetPortfolioHoldingsAsync(Guid portfolioId, Guid userId);
 
     /// <summary>
     /// 
