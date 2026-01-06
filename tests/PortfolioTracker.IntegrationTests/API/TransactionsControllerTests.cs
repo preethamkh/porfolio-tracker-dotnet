@@ -6,7 +6,6 @@ using PortfolioTracker.Core.Helpers;
 using PortfolioTracker.IntegrationTests.Fixtures;
 using PortfolioTracker.IntegrationTests.Helpers;
 using System.Net;
-using Microsoft.EntityFrameworkCore;
 
 namespace PortfolioTracker.IntegrationTests.API;
 
@@ -28,14 +27,14 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
         var response = await Client.GetAsync($"/api/users/{userId}/portfolios/{portfolioId}/transactions");
 
         // Assert
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task GetPortfolioTransactions_WhenUserOwnsPortfolio_ShouldReturnTransactions()
     {
         // Arrange
-        var authResponse = await RegisterAndAuthenticateAsync("test@example.com", 
+        var authResponse = await RegisterAndAuthenticateAsync("preetham@test.com", 
             "Password123!");
         var userId = authResponse.User.Id;
 
@@ -87,7 +86,7 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
     public async Task GetHoldingTransactions_WhenUserOwnsHolding_ShouldReturnTransactions()
     {
         // Arrange
-        var authResponse = await RegisterAndAuthenticateAsync("test@example.com", "Password123!");
+        var authResponse = await RegisterAndAuthenticateAsync("preetham@test.com", "Password123!");
         var userId = authResponse.User.Id;
 
         var portfolio = await TestDataBuilder.CreatePortfolio(Context, userId, "Test Portfolio");
@@ -134,7 +133,7 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
     public async Task GetTransaction_WhenTransactionExists_ShouldReturnTransaction()
     {
         // Arrange
-        var authResponse = await RegisterAndAuthenticateAsync("test@example.com", "Password123!");
+        var authResponse = await RegisterAndAuthenticateAsync("preetham@test.com", "Password123!");
         var userId = authResponse.User.Id;
 
         var portfolio = await TestDataBuilder.CreatePortfolio(Context, userId, "Test Portfolio");
@@ -181,7 +180,7 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
     public async Task CreateTransaction_BuyTransaction_ShouldCreate201AndUpdateHolding()
     {
         // Arrange
-        var authResponse = await RegisterAndAuthenticateAsync("test@example.com", "Password123!");
+        var authResponse = await RegisterAndAuthenticateAsync("preetham@test.com", "Password123!");
         var userId = authResponse.User.Id;
 
         var portfolio = await TestDataBuilder.CreatePortfolio(Context, userId, "Test Portfolio");
@@ -223,6 +222,10 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
         result.TransactionType.Should().Be(TransactionType.Buy);
         result.Shares.Should().Be(5);
 
+        // Clearing to avoid the detached entity problem - test's DbContext is not aware of changes made by the API's DbContext
+        // Clear tracking to get fresh data
+        Context.ChangeTracker.Clear();
+
         // Verify holding was updated
         var updatedHolding = await Context.Holdings.FindAsync(holding.Id);
         updatedHolding.Should().NotBeNull();
@@ -236,7 +239,7 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
     public async Task CreateTransaction_SellTransaction_ShouldCreate201AndReduceShares()
     {
         // Arrange
-        var authResponse = await RegisterAndAuthenticateAsync("test@example.com", "Password123!");
+        var authResponse = await RegisterAndAuthenticateAsync("preetham@test.com", "Password123!");
         var userId = authResponse.User.Id;
 
         var portfolio = await TestDataBuilder.CreatePortfolio(Context, userId, "Test Portfolio");
@@ -276,6 +279,9 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
         var result = await response.ReadAsJsonAsync<TransactionDto>();
         result!.TransactionType.Should().Be(TransactionType.Sell);
 
+        // Clear tracking to get fresh data
+        Context.ChangeTracker.Clear();
+
         // Verify holding was updated
         var updatedHolding = await Context.Holdings.FindAsync(holding.Id);
         updatedHolding.Should().NotBeNull();
@@ -287,15 +293,12 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
     public async Task CreateTransaction_SellAllShares_ShouldResetAverageCost()
     {
         // Arrange
-        var authResponse = await RegisterAndAuthenticateAsync("test@example.com", "Password123!");
+        var authResponse = await RegisterAndAuthenticateAsync("preetham@test.com", "Password123!");
         var userId = authResponse.User.Id;
 
         var portfolio = await TestDataBuilder.CreatePortfolio(Context, userId, "Test Portfolio");
         var security = await TestDataBuilder.CreateSecurity(Context, "GOOGL", "Alphabet");
-
-        await Context.Portfolios.AddAsync(portfolio);
-        await Context.Securities.AddAsync(security);
-
+        
         var holding = new Holding
         {
             Id = Guid.NewGuid(),
@@ -306,6 +309,7 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
+
         await Context.Holdings.AddAsync(holding);
         await Context.SaveChangesAsync();
 
@@ -325,6 +329,9 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Created);
 
+        // Clear tracking to get fresh data
+        Context.ChangeTracker.Clear();
+
         // Verify holding was updated
         var updatedHolding = await Context.Holdings.FindAsync(holding.Id);
         updatedHolding.Should().NotBeNull();
@@ -336,15 +343,12 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
     public async Task CreateTransaction_SellMoreThanOwned_ShouldReturn400()
     {
         // Arrange
-        var authResponse = await RegisterAndAuthenticateAsync("test@example.com", "Password123!");
+        var authResponse = await RegisterAndAuthenticateAsync("preetham@test.com", "Password123!");
         var userId = authResponse.User.Id;
 
         var portfolio = await TestDataBuilder.CreatePortfolio(Context, userId, "Test Portfolio");
         var security = await TestDataBuilder.CreateSecurity(Context, "AAPL", "Apple");
-
-        await Context.Portfolios.AddAsync(portfolio);
-        await Context.Securities.AddAsync(security);
-
+        
         var holding = new Holding
         {
             Id = Guid.NewGuid(),
@@ -378,7 +382,7 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
     public async Task CreateTransaction_InvalidTransactionType_ShouldReturn400()
     {
         // Arrange
-        var authResponse = await RegisterAndAuthenticateAsync("test@example.com", "Password123!");
+        var authResponse = await RegisterAndAuthenticateAsync("preetham@test.com", "Password123!");
         var userId = authResponse.User.Id;
 
         var createDto = new CreateTransactionDto
@@ -402,15 +406,12 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
     public async Task UpdateTransaction_WithValidData_ShouldReturn200AndRecalculateHolding()
     {
         // Arrange
-        var authResponse = await RegisterAndAuthenticateAsync("test@example.com", "Password123!");
+        var authResponse = await RegisterAndAuthenticateAsync("preetham@test.com", "Password123!");
         var userId = authResponse.User.Id;
 
         var portfolio = await TestDataBuilder.CreatePortfolio(Context, userId, "Test Portfolio");
         var security = await TestDataBuilder.CreateSecurity(Context, "AAPL", "Apple");
-
-        await Context.Portfolios.AddAsync(portfolio);
-        await Context.Securities.AddAsync(security);
-
+        
         var holding = new Holding
         {
             Id = Guid.NewGuid(),
@@ -457,6 +458,8 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
         var result = await response.ReadAsJsonAsync<TransactionDto>();
         result!.Shares.Should().Be(8);
 
+        Context.ChangeTracker.Clear();
+
         // Verify holding was recalculated
         var updatedHolding = await Context.Holdings.FindAsync(holding.Id);
         updatedHolding!.TotalShares.Should().Be(18); // 10 initial + 8 new
@@ -466,14 +469,11 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
     public async Task DeleteTransaction_WhenTransactionExists_ShouldReturn204AndReverseEffect()
     {
         // Arrange
-        var authResponse = await RegisterAndAuthenticateAsync("test@example.com", "Password123!");
+        var authResponse = await RegisterAndAuthenticateAsync("preetham@test.com", "Password123!");
         var userId = authResponse.User.Id;
 
         var portfolio = await TestDataBuilder.CreatePortfolio(Context, userId, "Test Portfolio");
         var security = await TestDataBuilder.CreateSecurity(Context, "MSFT", "Microsoft");
-
-        await Context.Portfolios.AddAsync(portfolio);
-        await Context.Securities.AddAsync(security);
 
         var holding = new Holding
         {
@@ -485,6 +485,7 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
+
         await Context.Holdings.AddAsync(holding);
 
         var transaction = new Transaction
@@ -499,6 +500,7 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
             TransactionDate = DateTime.UtcNow,
             CreatedAt = DateTime.UtcNow
         };
+
         await Context.Transactions.AddAsync(transaction);
         await Context.SaveChangesAsync();
 
@@ -507,6 +509,8 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        Context.ChangeTracker.Clear();
 
         // Verify transaction is deleted
         var deletedTransaction = await Context.Transactions.FindAsync(transaction.Id);
@@ -522,15 +526,10 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
     {
         // Arrange
         var user1 = await TestDataBuilder.CreateUser(Context, "user1@example.com");
-        //var user2 = await RegisterAndAuthenticateAsync("user2@example.com", "Password123!");
-
-        await Context.Users.AddAsync(user1);
+        
         var portfolio = await TestDataBuilder.CreatePortfolio(Context, user1.Id, "User1 Portfolio");
         var security = await TestDataBuilder.CreateSecurity(Context, "AAPL", "Apple");
-
-        await Context.Portfolios.AddAsync(portfolio);
-        await Context.Securities.AddAsync(security);
-
+        
         var holding = new Holding
         {
             Id = Guid.NewGuid(),
@@ -554,10 +553,12 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
             TransactionDate = DateTime.UtcNow,
             CreatedAt = DateTime.UtcNow
         };
+
         await Context.Transactions.AddAsync(transaction);
         await Context.SaveChangesAsync();
 
         // Act - user2 tries to delete user1's transaction
+        await RegisterAndAuthenticateAsync("user2@example.com", "Password123!");
         var response = await Client.DeleteAsync($"/api/users/{user1.Id}/transactions/{transaction.Id}");
 
         // Assert
