@@ -47,7 +47,7 @@ public class HoldingsController(IHoldingService holdingService, ILogger<Holdings
     /// Get a specific holding by ID with current valuation.
     /// GET /api/users/{userId}/portfolios/{portfolioId}/holdings/{holdingId}
     /// </summary>
-    [HttpGet("{holdingId}")]
+    [HttpGet("{holdingId:guid}")]
     [ProducesResponseType(typeof(HoldingDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -110,6 +110,36 @@ public class HoldingsController(IHoldingService holdingService, ILogger<Holdings
             logger.LogWarning(ex, "Failed to create holding in portfolio {PortfolioId}", portfolioId);
             return BadRequest(new { message = ex.Message });
         }
+    }
+
+    /// <summary>
+    /// Update holding shares and average cost.
+    /// PUT /api/users/{userId}/portfolios/{portfolioId}/holdings/{holdingId}
+    /// </summary>
+    [HttpPut("{holdingId}")]
+    [ProducesResponseType(typeof(HoldingDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<HoldingDto>> UpdateHolding(
+        Guid userId,
+        Guid portfolioId,
+        Guid holdingId,
+        [FromBody] UpdateHoldingDto updateHoldingDto)
+    {
+        if (!User.IsAuthorizedForUser(userId))
+        {
+            return Forbid();
+        }
+
+        var holding = await holdingService.UpdateHoldingAsync(holdingId, portfolioId, userId, updateHoldingDto);
+        if (holding == null)
+        {
+            return NotFound(new { message = "Holding not found" });
+        }
+
+        return Ok(holding);
     }
 
     /// <summary>
