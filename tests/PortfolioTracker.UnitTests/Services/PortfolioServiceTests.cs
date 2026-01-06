@@ -37,7 +37,7 @@ public class PortfolioServiceTests : TestBase
         var userId = Guid.NewGuid();
         var portfolios = new List<Portfolio>()
         {
-            new Portfolio
+            new()
             {
                 Id = Guid.NewGuid(),
                 Name = "Retirement",
@@ -45,7 +45,7 @@ public class PortfolioServiceTests : TestBase
                 IsDefault = true,
                 Currency = "AUD"
             },
-            new Portfolio
+            new()
             {
                 Id = Guid.NewGuid(),
                 Name = "Trading",

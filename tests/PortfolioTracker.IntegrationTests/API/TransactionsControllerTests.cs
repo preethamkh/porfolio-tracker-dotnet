@@ -1,6 +1,5 @@
 ﻿using FluentAssertions;
 using PortfolioTracker.Core.DTOs.Transaction;
-using PortfolioTracker.Core.Entities;
 using PortfolioTracker.Core.Enums;
 using PortfolioTracker.Core.Helpers;
 using PortfolioTracker.IntegrationTests.Fixtures;
@@ -40,34 +39,8 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
 
         var portfolio = await TestDataBuilder.CreatePortfolio(Context, userId, "Test Portfolio");
         var security = await TestDataBuilder.CreateSecurity(Context, "AAPL", "Apple Inc.");
-        
-        var holding = new Holding
-        {
-            Id = Guid.NewGuid(),
-            PortfolioId = portfolio.Id,
-            SecurityId = security.Id,
-            TotalShares = 10,
-            AverageCost = 180m,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-        await Context.Holdings.AddAsync(holding);
-
-        var transaction = new Transaction
-        {
-            Id = Guid.NewGuid(),
-            HoldingId = holding.Id,
-            TransactionType = TransactionType.Buy,
-            Shares = 10,
-            PricePerShare = 180m,
-            TotalAmount = 1800m,
-            Fees = 0m,
-            TransactionDate = DateTime.UtcNow.AddDays(-1),
-            CreatedAt = DateTime.UtcNow
-        };
-
-        await Context.Transactions.AddAsync(transaction);
-        await Context.SaveChangesAsync();
+        var holding = await TestDataBuilder.CreateHolding(Context, portfolio.Id, security.Id, totalShares: 10, averageCost: 180m);
+        await TestDataBuilder.CreateTransaction(Context, holding.Id, TransactionType.Buy, 10, 180m, 0m, DateTime.UtcNow.AddDays(-1));
 
         // Act
         var response = await Client.GetAsync($"/api/users/{userId}/portfolios/{portfolio.Id}/transactions");
@@ -91,32 +64,8 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
 
         var portfolio = await TestDataBuilder.CreatePortfolio(Context, userId, "Test Portfolio");
         var security = await TestDataBuilder.CreateSecurity(Context,"MSFT", "Microsoft");
-        
-        var holding = new Holding
-        {
-            Id = Guid.NewGuid(),
-            PortfolioId = portfolio.Id,
-            SecurityId = security.Id,
-            TotalShares = 5,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-        await Context.Holdings.AddAsync(holding);
-
-        var transaction = new Transaction
-        {
-            Id = Guid.NewGuid(),
-            HoldingId = holding.Id,
-            TransactionType = TransactionType.Buy,
-            Shares = 5,
-            PricePerShare = 380m,
-            TotalAmount = 1900m,
-            Fees = 0m,
-            TransactionDate = DateTime.UtcNow,
-            CreatedAt = DateTime.UtcNow
-        };
-        await Context.Transactions.AddAsync(transaction);
-        await Context.SaveChangesAsync();
+        var holding = await TestDataBuilder.CreateHolding(Context, portfolio.Id, security.Id, totalShares: 5);
+        await TestDataBuilder.CreateTransaction(Context, holding.Id, TransactionType.Buy, 5, 380m);
 
         // Act
         var response = await Client.GetAsync($"/api/users/{userId}/holdings/{holding.Id}/transactions");
@@ -138,32 +87,8 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
 
         var portfolio = await TestDataBuilder.CreatePortfolio(Context, userId, "Test Portfolio");
         var security = await TestDataBuilder.CreateSecurity(Context, "AAPL", "Apple");
-        
-        var holding = new Holding
-        {
-            Id = Guid.NewGuid(),
-            PortfolioId = portfolio.Id,
-            SecurityId = security.Id,
-            TotalShares = 10,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-        await Context.Holdings.AddAsync(holding);
-
-        var transaction = new Transaction
-        {
-            Id = Guid.NewGuid(),
-            HoldingId = holding.Id,
-            TransactionType = TransactionType.Buy,
-            Shares = 10,
-            PricePerShare = 180m,
-            TotalAmount = 1800m,
-            Fees = 0m,
-            TransactionDate = DateTime.UtcNow,
-            CreatedAt = DateTime.UtcNow
-        };
-        await Context.Transactions.AddAsync(transaction);
-        await Context.SaveChangesAsync();
+        var holding = await TestDataBuilder.CreateHolding(Context, portfolio.Id, security.Id, totalShares: 10);
+        var transaction = await TestDataBuilder.CreateTransaction(Context, holding.Id, TransactionType.Buy, 10, 180m);
 
         // Act
         var response = await Client.GetAsync($"/api/users/{userId}/transactions/{transaction.Id}");
@@ -185,20 +110,7 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
 
         var portfolio = await TestDataBuilder.CreatePortfolio(Context, userId, "Test Portfolio");
         var security = await TestDataBuilder.CreateSecurity(Context, "AAPL", "Apple");
-        
-        var holding = new Holding
-        {
-            Id = Guid.NewGuid(),
-            PortfolioId = portfolio.Id,
-            SecurityId = security.Id,
-            TotalShares = 10,
-            AverageCost = 180m,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        await Context.Holdings.AddAsync(holding);
-        await Context.SaveChangesAsync();
+        var holding = await TestDataBuilder.CreateHolding(Context, portfolio.Id, security.Id, totalShares: 10, averageCost: 180m);
 
         var createDto = new CreateTransactionDto
         {
@@ -244,20 +156,7 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
 
         var portfolio = await TestDataBuilder.CreatePortfolio(Context, userId, "Test Portfolio");
         var security = await TestDataBuilder.CreateSecurity(Context, "MSFT", "Microsoft");
-
-
-        var holding = new Holding
-        {
-            Id = Guid.NewGuid(),
-            PortfolioId = portfolio.Id,
-            SecurityId = security.Id,
-            TotalShares = 10,
-            AverageCost = 380m,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-        await Context.Holdings.AddAsync(holding);
-        await Context.SaveChangesAsync();
+        var holding = await TestDataBuilder.CreateHolding(Context, portfolio.Id, security.Id, totalShares: 10, averageCost: 380m);
 
         var createDto = new CreateTransactionDto
         {
@@ -298,20 +197,7 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
 
         var portfolio = await TestDataBuilder.CreatePortfolio(Context, userId, "Test Portfolio");
         var security = await TestDataBuilder.CreateSecurity(Context, "GOOGL", "Alphabet");
-        
-        var holding = new Holding
-        {
-            Id = Guid.NewGuid(),
-            PortfolioId = portfolio.Id,
-            SecurityId = security.Id,
-            TotalShares = 10,
-            AverageCost = 142m,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        await Context.Holdings.AddAsync(holding);
-        await Context.SaveChangesAsync();
+        var holding = await TestDataBuilder.CreateHolding(Context, portfolio.Id, security.Id, totalShares: 10, averageCost: 142m);
 
         var createDto = new CreateTransactionDto
         {
@@ -348,18 +234,7 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
 
         var portfolio = await TestDataBuilder.CreatePortfolio(Context, userId, "Test Portfolio");
         var security = await TestDataBuilder.CreateSecurity(Context, "AAPL", "Apple");
-        
-        var holding = new Holding
-        {
-            Id = Guid.NewGuid(),
-            PortfolioId = portfolio.Id,
-            SecurityId = security.Id,
-            TotalShares = 5,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-        await Context.Holdings.AddAsync(holding);
-        await Context.SaveChangesAsync();
+        var holding = await TestDataBuilder.CreateHolding(Context, portfolio.Id, security.Id, totalShares: 5);
 
         var createDto = new CreateTransactionDto
         {
@@ -411,33 +286,8 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
 
         var portfolio = await TestDataBuilder.CreatePortfolio(Context, userId, "Test Portfolio");
         var security = await TestDataBuilder.CreateSecurity(Context, "AAPL", "Apple");
-        
-        var holding = new Holding
-        {
-            Id = Guid.NewGuid(),
-            PortfolioId = portfolio.Id,
-            SecurityId = security.Id,
-            TotalShares = 15, // Result of 10 initial + 5 from transaction
-            AverageCost = 181.83m,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-        await Context.Holdings.AddAsync(holding);
-
-        var transaction = new Transaction
-        {
-            Id = Guid.NewGuid(),
-            HoldingId = holding.Id,
-            TransactionType = TransactionType.Buy,
-            Shares = 5,
-            PricePerShare = 185m,
-            TotalAmount = 925m,
-            Fees = 0m,
-            TransactionDate = DateTime.UtcNow.AddDays(-1),
-            CreatedAt = DateTime.UtcNow
-        };
-        await Context.Transactions.AddAsync(transaction);
-        await Context.SaveChangesAsync();
+        var holding = await TestDataBuilder.CreateHolding(Context, portfolio.Id, security.Id, totalShares: 15);
+        var transaction = await TestDataBuilder.CreateTransaction(Context, holding.Id, TransactionType.Buy, 5, 185m);
 
         var updateDto = new UpdateTransactionDto
         {
@@ -475,34 +325,8 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
         var portfolio = await TestDataBuilder.CreatePortfolio(Context, userId, "Test Portfolio");
         var security = await TestDataBuilder.CreateSecurity(Context, "MSFT", "Microsoft");
 
-        var holding = new Holding
-        {
-            Id = Guid.NewGuid(),
-            PortfolioId = portfolio.Id,
-            SecurityId = security.Id,
-            TotalShares = 15,
-            AverageCost = 381m,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        await Context.Holdings.AddAsync(holding);
-
-        var transaction = new Transaction
-        {
-            Id = Guid.NewGuid(),
-            HoldingId = holding.Id,
-            TransactionType = TransactionType.Buy,
-            Shares = 5,
-            PricePerShare = 385m,
-            TotalAmount = 1925m,
-            Fees = 0m,
-            TransactionDate = DateTime.UtcNow,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        await Context.Transactions.AddAsync(transaction);
-        await Context.SaveChangesAsync();
+        var holding = await TestDataBuilder.CreateHolding(Context, portfolio.Id, security.Id, totalShares: 15, averageCost: 381m);
+        var transaction = await TestDataBuilder.CreateTransaction(Context, holding.Id, TransactionType.Buy, 5, 385m);
 
         // Act
         var response = await Client.DeleteAsync($"/api/users/{userId}/transactions/{transaction.Id}");
@@ -530,32 +354,8 @@ public class TransactionsControllerTests(IntegrationTestWebAppFactory factory) :
         var portfolio = await TestDataBuilder.CreatePortfolio(Context, user1.Id, "User1 Portfolio");
         var security = await TestDataBuilder.CreateSecurity(Context, "AAPL", "Apple");
         
-        var holding = new Holding
-        {
-            Id = Guid.NewGuid(),
-            PortfolioId = portfolio.Id,
-            SecurityId = security.Id,
-            TotalShares = 10,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-        await Context.Holdings.AddAsync(holding);
-
-        var transaction = new Transaction
-        {
-            Id = Guid.NewGuid(),
-            HoldingId = holding.Id,
-            TransactionType = TransactionType.Buy,
-            Shares = 10,
-            PricePerShare = 180m,
-            TotalAmount = 1800m,
-            Fees = 0m,
-            TransactionDate = DateTime.UtcNow,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        await Context.Transactions.AddAsync(transaction);
-        await Context.SaveChangesAsync();
+        var holding = await TestDataBuilder.CreateHolding(Context, portfolio.Id, security.Id, totalShares: 10);
+        var transaction = await TestDataBuilder.CreateTransaction(Context, holding.Id, TransactionType.Buy, 10, 180m);
 
         // Act - user2 tries to delete user1's transaction
         await RegisterAndAuthenticateAsync("user2@example.com", "Password123!");

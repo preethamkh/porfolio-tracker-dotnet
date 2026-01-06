@@ -1,4 +1,5 @@
 ﻿using PortfolioTracker.Core.Entities;
+using PortfolioTracker.Core.Enums;
 using PortfolioTracker.Infrastructure.Data;
 
 namespace PortfolioTracker.IntegrationTests.Helpers;
@@ -191,6 +192,62 @@ public static class TestDataBuilder
         await CreatePortfolios(context, user.Id, portfolioCount, makeFirstDefault: true);
 
         return user;
+    }
+
+    /// <summary>
+    /// Creates a holding for a given portfolio and security.
+    /// </summary>
+    public static async Task<Holding> CreateHolding(
+        ApplicationDbContext context,
+        Guid portfolioId,
+        Guid securityId,
+        decimal totalShares = 0,
+        decimal? averageCost = null)
+    {
+        var holding = new Holding
+        {
+            Id = Guid.NewGuid(),
+            PortfolioId = portfolioId,
+            SecurityId = securityId,
+            TotalShares = totalShares,
+            AverageCost = averageCost,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        await context.Holdings.AddAsync(holding);
+        await context.SaveChangesAsync();
+        return holding;
+    }
+
+    /// <summary>
+    /// Creates a transaction for a given holding.
+    /// </summary>
+    public static async Task<Transaction> CreateTransaction(
+        ApplicationDbContext context,
+        Guid holdingId,
+        TransactionType transactionType,
+        decimal shares,
+        decimal pricePerShare,
+        decimal fees = 0,
+        DateTime? transactionDate = null,
+        string? notes = null)
+    {
+        var transaction = new Transaction
+        {
+            Id = Guid.NewGuid(),
+            HoldingId = holdingId,
+            TransactionType = transactionType,
+            Shares = shares,
+            PricePerShare = pricePerShare,
+            TotalAmount = shares * pricePerShare + fees,
+            Fees = fees,
+            TransactionDate = transactionDate ?? DateTime.UtcNow,
+            Notes = notes,
+            CreatedAt = DateTime.UtcNow
+        };
+        await context.Transactions.AddAsync(transaction);
+        await context.SaveChangesAsync();
+        return transaction;
     }
 
     #endregion
