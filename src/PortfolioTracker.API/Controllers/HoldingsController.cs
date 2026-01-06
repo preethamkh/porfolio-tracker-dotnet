@@ -10,7 +10,6 @@ namespace PortfolioTracker.API.Controllers;
 /// Manages holdings (securities) within user portfolios.
 /// All endpoints require authentication and verify user ownership of the portfolio.
 /// </summary>
-
 [Authorize]
 [ApiController]
 [Route("api/users/{userId}/portfolios/{portfolioId}/holdings")]
