@@ -176,11 +176,11 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
     {
-
-        //http://localhost:3000: This is the default port for Create React App, a popular tool for bootstrapping React projects.
-        //http://localhost:5173: This is the default port for Vite, a fast build tool often used with React and other front-end frameworks.
-
-        policy.WithOrigins("http://localhost:3000", "http://localhost:5173") // React dev servers
+        policy.WithOrigins(
+                "http://localhost:3000",
+                "https://portfoliotracker-react.vercel.app",
+                // Allow all Vercel preview deployments
+                "https://*.vercel.app")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
