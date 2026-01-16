@@ -1,0 +1,10 @@
+[phases.setup]
+nixPkgs = ["...", "dotnet-sdk_8"]
+
+[phases.build]
+cmds = [
+  "dotnet publish src/PortfolioTracker.API/PortfolioTracker.API.csproj -c Release -o out"
+]
+
+[start]
+cmd = "dotnet out/PortfolioTracker.API.dll"
