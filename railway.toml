@@ -1,0 +1,10 @@
+[build]
+builder = "nixpacks"
+
+[build.nixpacksPlan.phases.build]
+cmds = [
+  "dotnet publish src/PortfolioTracker.API/PortfolioTracker.API.csproj -c Release -o out"
+]
+
+[deploy]
+startCommand = "dotnet out/PortfolioTracker.API.dll"
