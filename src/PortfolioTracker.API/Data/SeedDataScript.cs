@@ -49,7 +49,7 @@ public static class SeedDataScript
             UserId = user.Id,
             Name = "My Investment Portfolio",
             Description = "Primary investment portfolio for long-term growth",
-            Currency = "AUD",
+            Currency = "USD", // Changed from AUD
             IsDefault = true,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -60,71 +60,71 @@ public static class SeedDataScript
         Console.WriteLine($"✓ Created portfolio: {portfolio.Name}");
 
         // ========================================================================
-        // 3. CREATE SECURITIES (ASX ETFs)
+        // 3. CREATE SECURITIES (US ETFs - API Compatible)
         // ========================================================================
 
         var securities = new List<Security>
         {
-            new Security
+            new()
             {
                 Id = Guid.NewGuid(),
-                Symbol = "VGS.AX",
-                Name = "Vanguard MSCI Index ETF",
-                Exchange = "ASX",
+                Symbol = "VTI",
+                Name = "Vanguard Total Stock Market ETF",
+                Exchange = "NYSE",
                 SecurityType = "ETF",
-                Currency = "AUD",
+                Currency = "USD",
                 Sector = "Diversified",
                 Industry = "Index Fund",
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
-            new Security
+            new()
             {
                 Id = Guid.NewGuid(),
-                Symbol = "IVV.AX",
-                Name = "iShares S&P 500 ETF",
-                Exchange = "ASX",
+                Symbol = "VOO",
+                Name = "Vanguard S&P 500 ETF",
+                Exchange = "NYSE",
                 SecurityType = "ETF",
-                Currency = "AUD",
+                Currency = "USD",
                 Sector = "Diversified",
                 Industry = "Index Fund",
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
-            new Security
+            new()
             {
                 Id = Guid.NewGuid(),
-                Symbol = "VAS.AX",
-                Name = "Vanguard Australian Shares Index ETF",
-                Exchange = "ASX",
+                Symbol = "SCHD",
+                Name = "Schwab US Dividend Equity ETF",
+                Exchange = "NYSE",
                 SecurityType = "ETF",
-                Currency = "AUD",
+                Currency = "USD",
                 Sector = "Diversified",
                 Industry = "Index Fund",
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
-            new Security
+            new()
             {
                 Id = Guid.NewGuid(),
-                Symbol = "NDQ.AX",
-                Name = "BetaShares NASDAQ 100 ETF",
-                Exchange = "ASX",
+                Symbol = "QQQ",
+                Name = "Invesco QQQ Trust (NASDAQ 100)",
+                Exchange = "NASDAQ",
                 SecurityType = "ETF",
-                Currency = "AUD",
+                Currency = "USD",
                 Sector = "Technology",
                 Industry = "Index Fund",
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
-            new Security
+            new()
             {
                 Id = Guid.NewGuid(),
-                Symbol = "A200.AX",
-                Name = "BetaShares Australia 200 ETF",
-                Exchange = "ASX",
+                Symbol = "VEA",
+                Name = "Vanguard FTSE Developed Markets ETF",
+                Exchange = "NYSE",
                 SecurityType = "ETF",
-                Currency = "AUD",
+                Currency = "USD",
                 Sector = "Diversified",
                 Industry = "Index Fund",
                 CreatedAt = DateTime.UtcNow,
@@ -140,29 +140,29 @@ public static class SeedDataScript
         // 4. CREATE HOLDINGS WITH TRANSACTIONS
         // ========================================================================
 
-        // HOLDING 1: VGS.AX (100 shares)
-        var vgsHolding = new Holding
+        // HOLDING 1: VTI (50 shares @ ~$250)
+        var vtiHolding = new Holding
         {
             Id = Guid.NewGuid(),
             PortfolioId = portfolio.Id,
-            SecurityId = securities[0].Id, // VGS.AX
-            TotalShares = 100,
-            AverageCost = 147.74m,
+            SecurityId = securities[0].Id, // VTI
+            TotalShares = 50,
+            AverageCost = 245.50m,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
 
-        var vgsTransactions = new List<Transaction>
-        {
+        var vtiTransactions = new List<Transaction>
+{
             new()
             {
                 Id = Guid.NewGuid(),
-                HoldingId = vgsHolding.Id,
+                HoldingId = vtiHolding.Id,
                 TransactionType = TransactionType.Buy,
-                Shares = 50,
-                PricePerShare = 145.00m,
-                TotalAmount = 7250.00m,
-                Fees = 9.95m,
+                Shares = 25,
+                PricePerShare = 240.00m,
+                TotalAmount = 6000.00m,
+                Fees = 5.00m,
                 TransactionDate = DateTime.UtcNow.AddMonths(-6),
                 Notes = "Initial purchase",
                 CreatedAt = DateTime.UtcNow
@@ -170,41 +170,41 @@ public static class SeedDataScript
             new()
             {
                 Id = Guid.NewGuid(),
-                HoldingId = vgsHolding.Id,
+                HoldingId = vtiHolding.Id,
                 TransactionType = TransactionType.Buy,
-                Shares = 50,
-                PricePerShare = 150.48m,
-                TotalAmount = 7524.00m,
-                Fees = 9.95m,
+                Shares = 25,
+                PricePerShare = 251.00m,
+                TotalAmount = 6275.00m,
+                Fees = 5.00m,
                 TransactionDate = DateTime.UtcNow.AddMonths(-3),
                 Notes = "Adding to position",
                 CreatedAt = DateTime.UtcNow
             }
         };
 
-        // HOLDING 2: IVV.AX (228 shares)
-        var ivvHolding = new Holding
+        // HOLDING 2: VOO (20 shares @ ~$500)
+        var vooHolding = new Holding
         {
             Id = Guid.NewGuid(),
             PortfolioId = portfolio.Id,
-            SecurityId = securities[1].Id, // IVV.AX
-            TotalShares = 228,
-            AverageCost = 66.00m,
+            SecurityId = securities[1].Id, // VOO
+            TotalShares = 20,
+            AverageCost = 495.00m,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
 
-        var ivvTransactions = new List<Transaction>
+        var vooTransactions = new List<Transaction>
         {
             new()
             {
                 Id = Guid.NewGuid(),
-                HoldingId = ivvHolding.Id,
+                HoldingId = vooHolding.Id,
                 TransactionType = TransactionType.Buy,
-                Shares = 100,
-                PricePerShare = 65.00m,
-                TotalAmount = 6500.00m,
-                Fees = 9.95m,
+                Shares = 10,
+                PricePerShare = 480.00m,
+                TotalAmount = 4800.00m,
+                Fees = 5.00m,
                 TransactionDate = DateTime.UtcNow.AddMonths(-8),
                 Notes = "Initial purchase",
                 CreatedAt = DateTime.UtcNow
@@ -212,83 +212,70 @@ public static class SeedDataScript
             new()
             {
                 Id = Guid.NewGuid(),
-                HoldingId = ivvHolding.Id,
+                HoldingId = vooHolding.Id,
                 TransactionType = TransactionType.Buy,
-                Shares = 100,
-                PricePerShare = 67.00m,
-                TotalAmount = 6700.00m,
-                Fees = 9.95m,
+                Shares = 10,
+                PricePerShare = 510.00m,
+                TotalAmount = 5100.00m,
+                Fees = 5.00m,
                 TransactionDate = DateTime.UtcNow.AddMonths(-4),
                 Notes = "Second purchase",
                 CreatedAt = DateTime.UtcNow
-            },
-            new()
-            {
-                Id = Guid.NewGuid(),
-                HoldingId = ivvHolding.Id,
-                TransactionType = TransactionType.Buy,
-                Shares = 28,
-                PricePerShare = 66.00m,
-                TotalAmount = 1848.00m,
-                Fees = 9.95m,
-                TransactionDate = DateTime.UtcNow.AddMonths(-1),
-                Notes = "Topping up",
-                CreatedAt = DateTime.UtcNow
             }
         };
 
-        // HOLDING 3: VAS.AX (150 shares)
-        var vasHolding = new Holding
+        // HOLDING 3: SCHD (100 shares @ ~$80)
+        var schdHolding = new Holding
         {
             Id = Guid.NewGuid(),
             PortfolioId = portfolio.Id,
-            SecurityId = securities[2].Id, // VAS.AX
-            TotalShares = 150,
-            AverageCost = 85.50m,
+            SecurityId = securities[2].Id, // SCHD
+            TotalShares = 100,
+            AverageCost = 78.50m,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
 
-        var vasTransactions = new List<Transaction>
-        {
-            new()
-            {
-                Id = Guid.NewGuid(),
-                HoldingId = vasHolding.Id,
-                TransactionType = TransactionType.Buy,
-                Shares = 150,
-                PricePerShare = 85.50m,
-                TotalAmount = 12825.00m,
-                Fees = 9.95m,
-                TransactionDate = DateTime.UtcNow.AddMonths(-5),
-                Notes = "Diversifying into Australian market",
-                CreatedAt = DateTime.UtcNow
-            }
-        };
+        var schdTransactions = new List<Transaction>
+                {
+                    new()
+                    {
+                        Id = Guid.NewGuid(),
+                        HoldingId = schdHolding.Id,
+                        TransactionType = TransactionType.Buy,
+                        Shares = 100,
+                        PricePerShare = 78.50m,
+                        TotalAmount = 7850.00m,
+                        Fees = 5.00m,
+                        TransactionDate = DateTime.UtcNow.AddMonths(-5),
+                        Notes = "Dividend income focus",
+                        CreatedAt = DateTime.UtcNow
+                    }
+                };
 
-        // HOLDING 4: NDQ.AX (75 shares)
-        var ndqHolding = new Holding
+        // HOLDING 4: QQQ (15 shares @ ~$450)
+        var qqqHolding = new Holding
         {
             Id = Guid.NewGuid(),
             PortfolioId = portfolio.Id,
-            SecurityId = securities[3].Id, // NDQ.AX
-            TotalShares = 75,
-            AverageCost = 32.20m,
+            SecurityId = securities[3].Id, // QQQ
+            TotalShares = 15,
+            AverageCost = 445.00m,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
 
-        var ndqTransactions = new List<Transaction>
+        var qqqTransactions = new List<Transaction>
         {
             new()
             {
                 Id = Guid.NewGuid(),
-                HoldingId = ndqHolding.Id,
+                HoldingId = qqqHolding.Id,
                 TransactionType = TransactionType.Buy,
-                Shares = 75,
-                PricePerShare = 32.20m,
-                TotalAmount = 2415.00m,
-                Fees = 9.95m,
+                Shares = 15,
+                PricePerShare = 445.00m,
+                TotalAmount = 6675.00m,
+                Fees = 5.00m,
                 TransactionDate = DateTime.UtcNow.AddMonths(-2),
                 Notes = "Tech exposure",
                 CreatedAt = DateTime.UtcNow
@@ -296,11 +283,18 @@ public static class SeedDataScript
         };
 
         // Add all holdings and transactions
-        await context.Holdings.AddRangeAsync(vgsHolding, ivvHolding, vasHolding, ndqHolding);
-        await context.Transactions.AddRangeAsync(vgsTransactions);
-        await context.Transactions.AddRangeAsync(ivvTransactions);
-        await context.Transactions.AddRangeAsync(vasTransactions);
-        await context.Transactions.AddRangeAsync(ndqTransactions);
+        await context.Holdings.AddRangeAsync(vtiHolding, vooHolding, schdHolding, qqqHolding);
+        await context.Transactions.AddRangeAsync(vtiTransactions);
+        await context.Transactions.AddRangeAsync(vooTransactions);
+        await context.Transactions.AddRangeAsync(schdTransactions);
+        await context.Transactions.AddRangeAsync(qqqTransactions);
+
+        // Add all holdings and transactions
+        await context.Holdings.AddRangeAsync(vtiHolding, vooHolding, schdHolding, qqqHolding);
+        await context.Transactions.AddRangeAsync(vtiTransactions);
+        await context.Transactions.AddRangeAsync(vooTransactions);
+        await context.Transactions.AddRangeAsync(schdTransactions);
+        await context.Transactions.AddRangeAsync(qqqTransactions);
 
         await context.SaveChangesAsync();
         Console.WriteLine("✓ Created 4 holdings with transactions");
@@ -353,7 +347,7 @@ public static class SeedDataScript
         Console.WriteLine($"Portfolio: {portfolio.Name}");
         Console.WriteLine($"Securities: {securities.Count}");
         Console.WriteLine($"Holdings: 4");
-        Console.WriteLine($"Transactions: {vgsTransactions.Count + ivvTransactions.Count + vasTransactions.Count + ndqTransactions.Count}");
+        Console.WriteLine($"Transactions: {vtiTransactions.Count + vooTransactions.Count + schdTransactions.Count + qqqTransactions.Count}");
         Console.WriteLine($"\nTotal Portfolio Cost: ~A${(100 * 147.74m + 228 * 66.00m + 150 * 85.50m + 75 * 32.20m):N2}");
         Console.WriteLine("\n✓ Seed data complete!");
         Console.WriteLine("\nNOTE: This seed data does NOT include current prices.");

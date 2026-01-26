@@ -125,8 +125,6 @@ builder.Services.AddScoped<ISecurityService, SecurityService>();
 builder.Services.AddScoped<IHoldingService, HoldingService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 
-builder.Services.AddControllers();
-
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -183,16 +181,26 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
     {
-        policy.WithOrigins(
-                "http://localhost:3000",
-                "https://portfoliotracker-react.vercel.app",
+        policy.SetIsOriginAllowed(origin =>
+            {
+                // Allow localhost for development
+                if (origin.StartsWith("http://localhost")) return true;
+
+                // Allow your production domain
+                if (origin == "https://portfoliotracker-react.vercel.app") return true;
+
                 // Allow all Vercel preview deployments
-                "https://*.vercel.app")
+                if (origin.EndsWith(".vercel.app")) return true;
+
+                return false;
+            })
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
     });
 });
+
+
 
 // ======================================================
 // REDIS CACHING CONFIGURATION
